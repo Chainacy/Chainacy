@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { COLORS, MESSAGES } from '@/lib/constants';
 import { CHROMIA_CONFIG } from '@/lib/chromia-config';
 import { Textarea } from '@/components/ui/Input';
