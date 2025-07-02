@@ -45,5 +45,3 @@ next-env.d.ts
 # OS
 Thumbs.db
 .DS_Store
-admin_keypair
-notes.txt
