@@ -1,0 +1,50 @@
+blockchains:
+  chainacy:
+    module: main
+    moduleArgs:
+      lib.ft4.core.auth:
+        evm_signatures_authorized_operations:
+          - register_user
+      lib.ft4.core.admin:
+        admin_pubkey: "021407423146539E8BAA16FB3327A30AFD914ABE84ECA79CC839DC5686BFD1BB1C"
+      lib.ft4.core.accounts.strategies.transfer.fee:
+        asset:
+          - name: "Chromia"
+            issuing_blockchain_rid": "15C0CA99BEE60A3B23829968771C50E491BD00D2E3AE448580CD48A8D71E7BBA"
+            amount: 10000000
+        fee_account: x"F15DEF01C0620FCA6DA00016DB3F310E2BBE11FA30E12ED3D3637F09A1EE48A4"
+      lib.ft4.core.accounts.strategies.transfer:
+        rules:
+          - sender_blockchain: "15C0CA99BEE60A3B23829968771C50E491BD00D2E3AE448580CD48A8D71E7BBA"
+            sender: "*"
+            recipient: "*"
+            asset:
+              - name: "Chromia"
+                min_amount: 10000000
+            timeout_days: 30
+            strategy:
+              - "fee"
+compile:
+  rellVersion: 0.14.7
+database:
+  schema: schema_chainacy
+libs:
+  ft4:
+    registry: https://gitlab.com/chromaway/ft4-lib.git
+    path: rell/src/lib/ft4
+    tagOrBranch: v1.1.0r
+    rid: x"FEEB0633698E7650D29DCCFE2996AD57CDC70AA3BDF770365C3D442D9DFC2A5E"
+    insecure: false
+  iccf:
+    registry: https://gitlab.com/chromaway/core/directory-chain
+    path: src/lib/iccf
+    tagOrBranch: 1.87.0
+    rid: x"9C359787B75927733034EA1CEE74EEC8829D2907E4FC94790B5E9ABE4396575D"
+    insecure: false
+deployments:
+   mainnet:
+     brid: x"7E5BE539EF62E48DDA7035867E67734A70833A69D2F162C457282C319AA58AE4"
+     url: https://system.chromaway.com
+     container: 2514f60f610d4799a8d99cc13286384968c19eea24ecd79395c69a434176e3a8
+     chains:
+      chainacy: x"221ADB43FAEC71289054A968DF1F7FEE8064F4852EFFB1063A7E848028ECFDD0"

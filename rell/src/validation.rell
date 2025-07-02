@@ -1,0 +1,16 @@
+module;
+
+function is_valid_pgp_key(pgp_public_key: text): boolean {
+    return pgp_public_key.starts_with("-----BEGIN PGP PUBLIC KEY BLOCK-----") and 
+        pgp_public_key.trim().ends_with("-----END PGP PUBLIC KEY BLOCK-----");
+}
+
+function is_valid_encrypted_message(encrypted_message: text): boolean {
+    return encrypted_message.starts_with("-----BEGIN PGP MESSAGE-----") and 
+        encrypted_message.trim().ends_with("-----END PGP MESSAGE-----");
+}
+
+function is_valid_telegram_username(telegram_username: text): boolean {
+    if (telegram_username == "") return true;
+    return telegram_username.matches("^[a-zA-Z][a-zA-Z0-9_]{4,31}$");
+}

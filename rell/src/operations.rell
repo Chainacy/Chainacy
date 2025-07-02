@@ -1,0 +1,159 @@
+module;
+
+import functions.*;
+import lib.ft4.core.admin;
+import lib.ft4.core.crosschain;
+import structs.{share_dto};
+import validation.*;
+
+operation set_guardian_profile(
+    pgp_public_key: text,
+    telegram_username: text,
+) {
+    val account = auth.authenticate();
+    val guardian = guardian @? { .id == account.id };
+
+    require(is_valid_pgp_key(pgp_public_key), "Invalid PGP public key");
+    require(is_valid_telegram_username(telegram_username), "Invalid Telegram username");
+
+    if (guardian == null) {
+        create guardian (
+            account.id,
+            pgp_public_key,
+            telegram_username,
+            last_activity = last_known_time()
+        );
+    } else {
+        update guardian (
+            pgp_public_key = pgp_public_key,
+            telegram_username = telegram_username,
+            last_activity = last_known_time()
+        );
+    }
+}
+
+operation create_message(
+    encrypted_message: text,
+    scheduled_publish_at: timestamp,
+    reward: integer,
+    shares: list<share_dto>
+) {
+    val author = auth.authenticate();
+
+    require(message_has_min_delay(scheduled_publish_at), "Schedule at least 24h ahead");
+    require(is_valid_encrypted_message(encrypted_message), "Invalid encrypted message format");
+    require(shares.size() >= 5, "At least 5 shares are required");
+    collect_message_fee(author, reward);
+
+    val message = create message (
+        author = author.id,
+        encrypted_message = encrypted_message,
+        scheduled_publish_at = scheduled_publish_at,
+        published_at = 0,
+        total_paid = reward,
+    );
+
+    for (share in shares) {
+        val guardian = guardian @? { .id == share.owner };
+        require(guardian != null, "Guardian not found");
+
+        create share (
+            owner = guardian,
+            linked_message = message,
+            encrypted_content = share.encrypted_content,
+            share_hash = share.share_hash,
+            reward = calculate_guardian_cut(reward),
+            decrypted_content = "",
+        );
+    }
+}
+
+operation redeem_share(decrypted_content: text) {
+    val account = auth.authenticate();
+    val share = share @ { .share_hash == sha256(decrypted_content.to_bytes()) };
+    val message = share.linked_message;
+
+    require(share.decrypted_content == "", "Share already redeemed");
+    require(is_share_redeemable(share), "To early or to late to redeem this share");
+    compensate_guardian(account, share.reward);
+
+    update share (
+        decrypted_content = decrypted_content,
+    );
+
+    if (is_decryptable(message)) {
+        update message (
+            published_at = last_known_time()
+        );
+        delete share @* { .linked_message == message and .decrypted_content == "" };
+    }
+}
+
+operation update_last_activity_from_web() {
+    val account = auth.authenticate();
+    val guardian = guardian @? { .id == account.id };
+
+    require(guardian != null, "Guardian not found");
+
+    update guardian (
+        last_activity = last_known_time()
+    );
+}
+
+operation update_last_activity_from_telegram(telegram_username: text) {
+    val guardian = guardian @? { .telegram_username == telegram_username };
+
+    require(guardian != null, "Guardian not found");
+
+    update guardian (
+        last_activity = last_known_time()
+    );
+}
+
+operation delete_message_by_id(id: integer) {
+    admin.require_admin();
+    val message = message @ { .rowid.to_integer() == id };
+
+    process_refund_for_message(message);
+    delete_message(message);
+}
+
+operation create_account_by_pubkey(pubkey: pubkey) {
+    admin.require_admin();
+    get_or_create_account(pubkey);
+}
+
+operation refund_all_messages() {
+    admin.require_admin();
+    val messages: list<message> = message @* { .published_at == 0 };
+    refund_and_delete_messages(messages);
+}
+
+operation register_crosschain_asset_by_operator(
+    name: text,
+    symbol: text,
+    decimals: integer,
+    issuing_blockchain_rid: byte_array,
+    icon_url: text,
+    origin_blockchain_rid: byte_array
+) {
+    admin.require_admin();
+    val asset = assets.asset @? { .symbol == symbol or .name == name };
+    require(asset == null, "ASSET_ALREADY_EXISTS");
+
+    val asset_id = (name, issuing_blockchain_rid).hash();
+    val type = assets.ASSET_TYPE_FT4;
+    val uniqueness_resolver = byte_array("");
+
+    crosschain.Unsafe.register_crosschain_asset(
+            asset_id,
+            name,
+            symbol,
+            decimals,
+            issuing_blockchain_rid,
+            icon_url,
+            type,
+            uniqueness_resolver,
+            origin_blockchain_rid
+        );
+}

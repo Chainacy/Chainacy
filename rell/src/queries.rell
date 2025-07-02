@@ -1,0 +1,167 @@
+module;
+
+import lib.ft4.accounts.{account};
+import entities.{guardian, share, message};
+import lib.ft4.assets;
+import functions.*;
+import structs.{guardian_dto, share_dto, message_dto};
+
+query get_guardian_profile(pubkey: byte_array) {
+    val guardian = guardian @? { .id == pubkey };
+
+    if (guardian != null) {
+        return (
+            pgp_public_key = guardian.pgp_public_key,
+            telegram_username = guardian.telegram_username
+        );
+    } else return null;
+}
+
+query get_decrypt_tasks_for_guardian(pubkey: byte_array) {
+    val guardian = guardian @? { .id == pubkey };
+    require(guardian != null, "Guardian not found");
+
+    val shares: list<share> = share @* {
+        .owner == guardian and .decrypted_content == ""
+    } (
+        share,
+        @omit @sort .linked_message.scheduled_publish_at,
+    );
+    val shares_dto: list<share_dto> = [];
+
+    for (s in shares) {
+        shares_dto.add(
+            share_dto(
+                owner = s.owner.id,
+                encrypted_content = s.encrypted_content,
+                decrypted_content = s.decrypted_content,
+                share_hash = s.share_hash,
+                scheduled_publish_at = s.linked_message.scheduled_publish_at,
+                reward = s.reward
+            )
+        );
+    }
+    return shares_dto;
+}
+
+query get_all_decrypt_tasks() {
+    val shares: list<share> = share @* { .decrypted_content == "" } (
+        share,
+        @omit @sort .linked_message.scheduled_publish_at,
+    ) limit 50;
+    val shares_dto: list<share_dto> = [];
+
+    for (s in shares) {
+        shares_dto.add(
+            share_dto(
+                owner = s.owner.id,
+                encrypted_content = s.encrypted_content,
+                decrypted_content = s.decrypted_content,
+                share_hash = s.share_hash,
+                scheduled_publish_at = s.linked_message.scheduled_publish_at,
+                reward = s.reward
+            )
+        );
+    }
+    return shares_dto;
+}
+
+query get_random_guardians(count: integer, seed: integer): list<guardian_dto> {
+    val guardians: list<guardian> = select_random_guardians(count, seed);
+    val guardians_dto: list<guardian_dto> = [];
+
+    for (guardian in guardians) {
+        guardians_dto.add(
+            guardian_dto(
+                id = guardian.id,
+                pgp_public_key = guardian.pgp_public_key
+            )
+        );
+    }
+    return guardians_dto;
+}
+
+query get_message(id: integer) {
+    val message = message @ { .rowid.to_integer() == id };
+    val shares_dto: list<share_dto> = [];
+    val redeemed_shares: list<share> = share @* {
+        .linked_message == message and
+        .decrypted_content != ""
+    };
+
+    for (s in redeemed_shares) {
+        shares_dto.add(
+            share_dto(
+                owner = s.owner.id,
+                encrypted_content = s.encrypted_content,
+                decrypted_content = s.decrypted_content,
+                share_hash = s.share_hash,
+                scheduled_publish_at = message.scheduled_publish_at,
+                reward = s.reward
+            )
+        );
+    }
+    return message_dto(
+        id = message.rowid.to_integer(),
+        encrypted_message = message.encrypted_message,
+        scheduled_publish_at = message.scheduled_publish_at,
+        published_at = message.published_at,
+        total_paid = message.total_paid,
+        redeemed_shares = shares_dto
+    );
+}
+
+query get_all_published_messages() {
+    val messages_dto: list<message_dto> = [];
+
+    val messages: list<message> = message @* { .published_at != 0 } (
+        message,
+        @omit @sort_desc message.published_at,
+    ) limit 100;
+
+    for (m in messages) {
+        val redeemed_shares: list<share> = share @* {
+            .linked_message == m and
+            .decrypted_content != ""
+        };
+        val shares_dto: list<share_dto> = [];
+
+        for (s in redeemed_shares) {
+            shares_dto.add(
+                share_dto(
+                    owner = s.owner.id,
+                    encrypted_content = s.encrypted_content,
+                    decrypted_content = s.decrypted_content,
+                    share_hash = s.share_hash,
+                    scheduled_publish_at = m.scheduled_publish_at,
+                    reward = s.reward
+                )
+            );
+        }
+        messages_dto.add(
+            message_dto(
+                id = m.rowid.to_integer(),
+                encrypted_message = m.encrypted_message,
+                scheduled_publish_at = m.scheduled_publish_at,
+                published_at = m.published_at,
+                total_paid = m.total_paid,
+                redeemed_shares = shares_dto,
+            )
+        );
+    }
+    return messages_dto;
+}
+
+query get_balance_by_telegram_username(telegram_username: text) {
+    val guardian = guardian @? { .telegram_username == telegram_username };
+    require(guardian != null, "Guardian not found");
+
+    val asset = get_platform_asset();
+    val account = account @ { .id == guardian.id };
+    val balance = assets.get_asset_balance(account, asset);
+
+    return (
+        telegram_username = guardian.telegram_username,
+        balance = balance
+    );
+}

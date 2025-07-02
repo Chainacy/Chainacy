@@ -1,0 +1,25 @@
+module;
+
+entity message {
+    author: pubkey;
+    encrypted_message: text;
+    scheduled_publish_at: timestamp;
+    mutable published_at: timestamp;
+    total_paid: integer;
+}
+
+entity guardian {
+    key id: pubkey;
+    mutable pgp_public_key: text;
+    mutable telegram_username: text;
+    mutable last_activity: timestamp;
+}
+
+entity share {
+    index owner: guardian;
+    index linked_message: message;
+    encrypted_content: text;
+    mutable decrypted_content: text;
+    share_hash: byte_array;
+    reward: integer;
+}

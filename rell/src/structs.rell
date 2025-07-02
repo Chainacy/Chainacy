@@ -1,0 +1,24 @@
+module;
+
+struct guardian_dto {
+    id: byte_array;
+    pgp_public_key: text;
+}
+
+struct share_dto {
+    owner: byte_array;
+    encrypted_content: text;
+    decrypted_content: text;
+    share_hash: byte_array;
+    scheduled_publish_at: timestamp;
+    reward: integer;
+}
+
+struct message_dto {
+    id: integer;
+    encrypted_message: text;
+    scheduled_publish_at: timestamp;
+    published_at: timestamp;
+    total_paid: integer;
+    redeemed_shares: list<share_dto>;
+}

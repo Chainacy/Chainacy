@@ -1,0 +1,43 @@
+{
+  "name": "chainacy",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "export": "next export",
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "type-check": "tsc --noEmit",
+    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
+    "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
+    "clean": "rm -rf .next node_modules",
+    "analyze": "ANALYZE=true next build"
+  },
+  "dependencies": {
+    "@chromia/ft4": "^2.0.1",
+    "clsx": "^2.1.1",
+    "next": "^15.3.4",
+    "openpgp": "^6.1.1",
+    "postchain-client": "^2.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "secrets.js": "^0.1.8",
+    "tailwind-merge": "^3.3.1"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/postcss": "^4.1.11",
+    "@types/node": "^24.0.7",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.30.0",
+    "eslint-config-next": "^15.3.4",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.11",
+    "typescript": "^5"
+  }
+}

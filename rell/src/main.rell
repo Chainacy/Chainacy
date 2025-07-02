@@ -1,0 +1,28 @@
+module;
+
+import functions.{clean_up, get_or_create_account};
+import lib.ft4.auth;
+import lib.ft4.accounts;
+import lib.ft4.accounts.{account};
+import lib.ft4.accounts.strategies.transfer.fee;
+import operations.*;
+import queries.*;
+
+@extend(auth.auth_handler)
+function () = auth.add_auth_handler(
+    flags = ["ChainacySession"]
+);
+
+object dapp_meta {
+    mutable reward_currency: text = "CHR";
+    mutable min_reward: integer = 10;
+    mutable fee_treasury: account = get_or_create_account(x"2aDB7a28a241834D33790FEcA782277cB8564040");
+    mutable reward_treasury: account = accounts.create_account_without_auth(
+        ("RewardTreasury" + chain_context.blockchain_rid).hash(),
+        "RewardTreasury"
+    );
+}
+
+operation __begin_block(height: integer) {
+    clean_up();
+}

@@ -1,0 +1,178 @@
+module;
+
+import entities.{guardian, message, share};
+import main.{dapp_meta};
+import lib.ft4.accounts.*;
+import lib.ft4.assets;
+import lib.ft4.assets.{asset};
+
+function last_known_time() {
+    return if (op_context.exists)
+        op_context.last_block_time
+    else block @ { } ( @max .timestamp ) ?: 0;
+}
+
+function get_platform_asset(): asset {
+    val asset = assets.asset @? {
+        .symbol == dapp_meta.reward_currency
+    };
+    require(asset != null, "Asset " + dapp_meta.reward_currency + " not found");
+    return asset;
+}
+
+function message_has_min_delay(scheduled_publish_at: timestamp) {
+    val one_day_in_ms = 24 * 60 * 60 * 1000;
+    return scheduled_publish_at > last_known_time() + one_day_in_ms;
+}
+
+function get_or_create_account(pubkey: byte_array): account {
+    val account_finding = account @? { .id == pubkey.hash() };
+
+    if (account_finding != null) {
+        return account_finding;
+    } else {
+        val new_account = create_account_with_auth(single_sig_auth_descriptor(pubkey, set(["A", "T"])));
+        return new_account;
+    }
+}
+
+function select_random_guardians(count: integer, seed: integer): list<guardian> {
+    val thirty_days_in_ms = 30 * 24 * 60 * 60 * 1000;
+    val active_guardians: list<guardian> = guardian @* {
+        .last_activity > last_known_time() - thirty_days_in_ms
+    };
+
+    require(active_guardians.size() >= count, "Not enough active guardians");
+    val lucky_guardians: list<guardian> = [];
+    var loop_count = 0;
+
+    while (lucky_guardians.size() < count) {
+        val random_number = (last_known_time() + seed + loop_count++) % active_guardians.size();
+        val next_lucky_guardian = active_guardians[random_number];
+
+        if (lucky_guardians.contains(next_lucky_guardian) == false) {
+            lucky_guardians.add(next_lucky_guardian);
+        }
+    }
+
+    return lucky_guardians;
+}
+
+function clean_up() {
+    val thirty_days_in_ms = 30 * 24 * 60 * 60 * 1000;
+    val expired_messages = message @* {
+        (.scheduled_publish_at + thirty_days_in_ms) < last_known_time() and .published_at == 0
+    };
+    refund_and_delete_messages(expired_messages);
+}
+
+function refund_and_delete_messages(messages: list<message>) {
+    for (message in messages) {
+        process_refund_for_message(message);
+        delete_message(message);
+    }
+}
+
+function delete_message(message: message) {
+    delete_unredeemed_shares(message);
+    delete_redeemed_shares(message);
+    delete message;
+}
+
+function delete_unredeemed_shares(message: message) {
+    delete share @* { .linked_message == message and .decrypted_content == "" };
+}
+
+function delete_redeemed_shares(message: message) {
+    delete share @* { .linked_message == message and .decrypted_content != "" };
+}
+
+function process_refund_for_message(message: message) {
+    val asset = get_platform_asset();
+    val refund_ammount = calculate_refund_amount(message);
+    val treasury_balance = assets.get_asset_balance(dapp_meta.reward_treasury, asset);
+
+    require(treasury_balance >= refund_ammount, "Insufficient balance in treasury");
+    require(refund_ammount <= message.total_paid, "Refund amount must be less than total paid");
+
+    assets.Unsafe.transfer(
+            dapp_meta.reward_treasury,
+            account @ { .id == message.author },
+            asset,
+            refund_ammount
+        );
+}
+
+function calculate_refund_amount(message: message): integer {
+    val redeemed_shares = share @* {
+        .linked_message == message and .decrypted_content != ""
+    };
+
+    val redeemed_shares_count = redeemed_shares.size();
+    val guardian_cut = calculate_guardian_cut(message.total_paid);
+    val dapp_cut = calculate_dapp_cut(message.total_paid);
+
+    val refund_amount = message.total_paid - (guardian_cut * redeemed_shares_count) - dapp_cut;
+    return refund_amount;
+}
+
+function calculate_guardian_cut(reward: integer): integer {
+    return (reward * 30) / 100;
+}
+
+function calculate_dapp_cut(reward: integer): integer {
+    return (reward * 10) / 100;
+}
+
+function collect_message_fee(sender: account, reward: integer) {
+    val asset = get_platform_asset();
+    require(reward >= dapp_meta.min_reward, "The minimum reward is 10 " + dapp_meta.reward_currency);
+
+    val balance = assets.get_asset_balance(sender, asset);
+    require(balance >= reward, "Insufficient " + dapp_meta.reward_currency + " balance");
+
+    assets.Unsafe.transfer(
+            sender,
+            dapp_meta.reward_treasury,
+            asset,
+            calculate_guardian_cut(reward) * 3
+        );
+
+    assets.Unsafe.transfer(
+            sender,
+            dapp_meta.fee_treasury,
+            asset,
+            calculate_dapp_cut(reward)
+        );
+}
+
+function is_decryptable(message): boolean {
+    val min_shares_to_decrypt = 3;
+    val submitted_shares_count = share @* {
+        .linked_message == message and .decrypted_content != ""
+    };
+
+    return submitted_shares_count.size() >= min_shares_to_decrypt;
+}
+
+function is_share_redeemable(share: share): boolean {
+    val message = share.linked_message;
+
+    if (message.scheduled_publish_at >= last_known_time() and
+        is_decryptable(message) == false) {
+        return true;
+    } else return false;
+}
+
+function compensate_guardian(receiver: account, reward: integer) {
+    val asset = get_platform_asset();
+    val balance = assets.get_asset_balance(dapp_meta.reward_treasury, asset);
+    require(balance >= reward, "Insufficient " + dapp_meta.reward_currency + " balance");
+
+    assets.Unsafe.transfer(
+            dapp_meta.reward_treasury,
+            receiver,
+            asset,
+            reward
+        );
+}
