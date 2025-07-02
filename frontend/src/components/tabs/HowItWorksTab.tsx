@@ -12,7 +12,8 @@ const ExternalLink = ({ href, children }: { href: string; children: React.ReactN
     href={href} 
     target="_blank" 
     rel="noopener noreferrer" 
-    className="text-blue-600 underline font-semibold hover:text-blue-800 transition-colors"
+    className="text-blue-500 font-medium"
+    style={{ textDecoration: 'none' }}
   >
     {children}
   </a>
@@ -140,6 +141,17 @@ const faqData: FAQItem[] = [
     )
   },
   {
+    id: 'source-code',
+    question: 'Is the source code available for review?',
+    answer: (
+      <div>
+        <p>Yes, Chainacy is committed to transparency and open-source development. The complete source code for both the frontend application and the blockchain smart contracts (written in Rell) is publicly available on <ExternalLink href="https://github.com/Chainacy/Chainacy">GitHub</ExternalLink>.</p>
+        <br />
+        <p>This open-source approach ensures transparency, allows security audits by the community, and enables developers to verify the implementation of our encryption and secret sharing mechanisms.</p>
+      </div>
+    )
+  },
+  {
     id: 'donation',
     question: 'How can I support this project?',
     answer: (
@@ -158,7 +170,7 @@ const faqData: FAQItem[] = [
           
           <div>
             <Strong>Community & Updates</Strong>
-            <p className="mt-2 text-gray-600">Stay connected with our growing community: Follow us on <ExternalLink href="https://x.com/chainacy">X</ExternalLink> and join our <ExternalLink href="https://t.me/Chainacy">Telegram group</ExternalLink> for announcements and support.</p>
+            <p className="mt-2 text-gray-600">Stay connected with our growing community: Follow us on <ExternalLink href="https://x.com/chainacy">X</ExternalLink> and join our <ExternalLink href="https://t.me/Chainacy">Telegram</ExternalLink> group for announcements and support.</p>
           </div>
         </div>
       </div>
