@@ -9,7 +9,8 @@ import {
   ttlLoginRule,
 } from "@chromia/ft4";
 import { createClient } from "postchain-client";
-import { ReactNode, createContext, useContext, useState } from "react";
+import type { IClient } from "postchain-client";
+import { ReactNode, createContext, useContext, useState, useRef } from "react";
 import { CHROMIA_CONFIG } from "@/lib/chromia-config";
 
 declare global {
@@ -25,6 +26,7 @@ const ChromiaContext = createContext<{
   connectWallet: () => Promise<void>;
   disconnect: () => void;
   logout?: () => Promise<void>;
+  getSharedClient: () => Promise<IClient>;
 } | undefined>(undefined);
 
 export function ContextProvider({ children }: { children: ReactNode }) {
@@ -32,6 +34,17 @@ export function ContextProvider({ children }: { children: ReactNode }) {
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState('');
   const [logoutFn, setLogoutFn] = useState<(() => Promise<void>) | undefined>(undefined);
+  const sharedClientRef = useRef<IClient | null>(null);
+
+  const getSharedClient = async (): Promise<IClient> => {
+    if (!sharedClientRef.current) {
+      sharedClientRef.current = await createClient({
+        blockchainRid: CHROMIA_CONFIG.blockchainRid,
+        directoryNodeUrlPool: CHROMIA_CONFIG.directoryNodeUrlPool,
+      });
+    }
+    return sharedClientRef.current;
+  };
 
   const connectWallet = async () => {
     if (isConnecting || session) return;
@@ -46,10 +59,7 @@ export function ContextProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const client = await createClient({
-        blockchainRid: CHROMIA_CONFIG.blockchainRid,
-        directoryNodeUrlPool: CHROMIA_CONFIG.directoryNodeUrlPool,
-      });
+      const client = await getSharedClient();
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const evmKeyStore = await createWeb3ProviderEvmKeyStore(window.ethereum as any);
@@ -106,7 +116,8 @@ export function ContextProvider({ children }: { children: ReactNode }) {
       error, 
       connectWallet, 
       disconnect,
-      logout: logoutFn 
+      logout: logoutFn,
+      getSharedClient
     }}>
       {children}
     </ChromiaContext.Provider>
@@ -119,4 +130,12 @@ export function useSessionContext() {
     throw new Error("useSessionContext must be used within a ContextProvider");
   }
   return context;
+}
+
+export function useSharedClient() {
+  const context = useContext(ChromiaContext);
+  if (!context) {
+    throw new Error("useSharedClient must be used within a ContextProvider");
+  }
+  return context.getSharedClient;
 }

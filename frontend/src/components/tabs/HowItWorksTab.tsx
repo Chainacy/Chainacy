@@ -73,7 +73,7 @@ const faqData: FAQItem[] = [
     id: 'message-expiry',
     question: 'What happens if a message cannot be published?',
     answer: (
-      <p>If 30 days have passed after the author&apos;s desired publication date and still fewer than 3 decrypted shares have been submitted (which are required to reconstruct the private key for decryption), all data related to this message will be deleted from the platform and the author will be refunded their payment minus the 10% platform fee.</p>
+      <p>If 30 days have passed after the author&apos;s desired publication date and still fewer than 3 decrypted shares have been submitted (which are required to reconstruct the private key for decryption), all data related to this message will be deleted from the platform. The author will be refunded their payment minus the 10% platform fee and any rewards already paid to guardians who submitted shares.</p>
     )
   },
   {
@@ -164,7 +164,7 @@ const faqData: FAQItem[] = [
             <p className="mt-2 text-gray-600">Your donations help us maintain and improve the platform:</p>
             <div className="mt-2 bg-gray-50 border border-gray-200 rounded-lg p-3">
               <p className="text-xs text-gray-500 mb-1">Ethereum Address:</p>
-              <p className="font-mono text-sm break-all">0x09c859e05e5fEb14D24f6bA65c2F3ac0460eBA8b</p>
+              <p className="font-mono text-[10px] sm:text-sm break-all">0x09c859e05e5fEb14D24f6bA65c2F3ac0460eBA8b</p>
             </div>
           </div>
           

@@ -85,6 +85,7 @@ export default function HomePage() {
           active={activeTab === 'published'} 
           publishedState={publishedState}
           setPublishedState={setPublishedState}
+          isWalletConnected={isConnected}
         />
       ),
     },

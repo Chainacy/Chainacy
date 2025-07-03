@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { COLORS, MESSAGES } from '@/lib/constants';
-import { CHROMIA_CONFIG } from '@/lib/chromia-config';
 import { Textarea } from '@/components/ui/Input';
 import { ButtonGroup } from '@/components/ui/ButtonGroup';
 import { useWallet } from '@/hooks';
 import { useAsyncState } from '@/hooks/useAsyncState';
 import { useChromiaQuery, useChromiaSession, useChromiaOperation } from '@/hooks/chromia';
-import { createClient } from 'postchain-client';
+import { useSharedClient } from '@/components/ContextProvider';
 import type { Task } from '@/types';
 import type { WalletDependentProps, DecryptionState, TabProps } from '@/types/components';
 import type { ShareData } from '@/lib/encryption';
@@ -28,6 +27,7 @@ export const DecryptTab = ({
   const { query } = useChromiaQuery();
   const { call } = useChromiaOperation();
   const { accountId } = useChromiaSession();
+  const getSharedClient = useSharedClient();
   
   const {
     isLoading: isLoadingTasks,
@@ -69,17 +69,26 @@ export const DecryptTab = ({
 
   const fetchAllTasks = useCallback(async () => {
     await executeFetchTasks(async () => {
-      const client = await createClient({
-        blockchainRid: CHROMIA_CONFIG.blockchainRid,
-        directoryNodeUrlPool: CHROMIA_CONFIG.directoryNodeUrlPool,
-      });
-      const shareData = await client.query('get_all_decrypt_tasks', {}) as unknown as ShareData[];
+      let shareData: ShareData[];
+      
+      if (isWalletConnected && query) {
+        try {
+          shareData = await query('get_all_decrypt_tasks', {}) as unknown as ShareData[];
+        } catch {
+          const client = await getSharedClient();
+          shareData = await client.query('get_all_decrypt_tasks', {}) as unknown as ShareData[];
+        }
+      } else {
+        const client = await getSharedClient();
+        shareData = await client.query('get_all_decrypt_tasks', {}) as unknown as ShareData[];
+      }
+      
       const tasks = mapShareDataToTasks(shareData);
       setAllTasks(tasks);
       setHasLoadedAll(true);
       return tasks;
     });
-  }, [executeFetchTasks]);
+  }, [executeFetchTasks, isWalletConnected, query, getSharedClient]);
 
   const fetchMyTasks = useCallback(async () => {
     if (!isWalletConnected || !accountId) return;

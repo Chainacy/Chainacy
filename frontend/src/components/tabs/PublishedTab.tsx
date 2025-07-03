@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { COLORS, MESSAGES } from '@/lib/constants';
-import { CHROMIA_CONFIG } from '@/lib/chromia-config';
 import { useAsyncState } from '@/hooks/useAsyncState';
-import { createClient } from 'postchain-client';
+import { useChromiaQuery } from '@/hooks/chromia';
+import { useSharedClient } from '@/components/ContextProvider';
 import { decryptMessageWithShares } from '@/lib/decryption';
 import type { PublishedMessage, MessageDto } from '@/types';
 import type { TabProps, PublishedState } from '@/types/components';
@@ -10,10 +10,18 @@ import type { TabProps, PublishedState } from '@/types/components';
 interface PublishedTabProps extends TabProps {
   publishedState: PublishedState;
   setPublishedState: (state: PublishedState) => void;
+  isWalletConnected: boolean;
 }
 
-export const PublishedTab = ({ active, publishedState, setPublishedState }: PublishedTabProps) => {
+export const PublishedTab = ({ 
+  active, 
+  publishedState, 
+  setPublishedState,
+  isWalletConnected
+}: PublishedTabProps) => {
   const [publishedMessages, setPublishedMessages] = useState<PublishedMessage[]>([]);
+  const { query } = useChromiaQuery();
+  const getSharedClient = useSharedClient();
   
   const {
     isLoading: isLoadingMessages,
@@ -22,11 +30,19 @@ export const PublishedTab = ({ active, publishedState, setPublishedState }: Publ
 
   const fetchPublishedMessages = useCallback(async () => {
     await executeFetchMessages(async () => {
-      const client = await createClient({
-        blockchainRid: CHROMIA_CONFIG.blockchainRid,
-        directoryNodeUrlPool: CHROMIA_CONFIG.directoryNodeUrlPool,
-      });
-      const messageData = await client.query('get_all_published_messages', {}) as unknown as MessageDto[];
+      let messageData: MessageDto[];
+      
+      if (isWalletConnected && query) {
+        try {
+          messageData = await query('get_all_published_messages', {}) as unknown as MessageDto[];
+        } catch {
+          const client = await getSharedClient();
+          messageData = await client.query('get_all_published_messages', {}) as unknown as MessageDto[];
+        }
+      } else {
+        const client = await getSharedClient();
+        messageData = await client.query('get_all_published_messages', {}) as unknown as MessageDto[];
+      }
       
       const messages: PublishedMessage[] = messageData.map((msg) => {
         const scheduledDate = new Date(msg.scheduled_publish_at);
@@ -64,8 +80,7 @@ export const PublishedTab = ({ active, publishedState, setPublishedState }: Publ
       
       return messages;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [executeFetchMessages]);
+  }, [executeFetchMessages, isWalletConnected, query, getSharedClient, setPublishedState]);
 
   const decryptMessage = async (messageId: string, messageData: MessageDto) => {
     setPublishedMessages(prev => prev.map(msg => 
