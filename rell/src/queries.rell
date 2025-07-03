@@ -165,3 +165,11 @@ query get_balance_by_telegram_username(telegram_username: text) {
         balance = balance
     );
 }
+
+query get_number_of_active_guardians() {
+    val thirty_days_in_ms = 30 * 24 * 60 * 60 * 1000;
+    val active_guardians: list<guardian> = guardian @* {
+        .last_activity > last_known_time() - thirty_days_in_ms
+    };
+    return active_guardians.size();
+}
