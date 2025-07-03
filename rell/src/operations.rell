@@ -47,6 +47,7 @@ operation create_message(
 
     val message = create message (
         author = author.id,
+        created_at = last_known_time(),
         encrypted_message = encrypted_message,
         scheduled_publish_at = scheduled_publish_at,
         published_at = 0,

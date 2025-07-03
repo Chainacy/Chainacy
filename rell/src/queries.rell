@@ -74,7 +74,8 @@ query get_random_guardians(count: integer, seed: integer): list<guardian_dto> {
         guardians_dto.add(
             guardian_dto(
                 id = guardian.id,
-                pgp_public_key = guardian.pgp_public_key
+                pgp_public_key = guardian.pgp_public_key,
+                telegram_username = guardian.telegram_username
             )
         );
     }
@@ -172,4 +173,36 @@ query get_number_of_active_guardians() {
         .last_activity > last_known_time() - thirty_days_in_ms
     };
     return active_guardians.size();
+}
+
+query get_guardians_with_new_tasks_since(timestamp: timestamp) {
+    val guardian_ids = set<byte_array>();
+    
+    val messages: list<message> = message @* {
+        .created_at > timestamp
+    };
+
+    for (message in messages) {
+        val shares: list<share> = share @* {
+            .linked_message == message and
+            .decrypted_content == ""
+        };
+
+        for (share in shares) {
+            guardian_ids.add(share.owner.id);
+        }
+    }
+
+    val guardians_dto: list<guardian_dto> = [];
+    for (id in guardian_ids) {
+        val guardian = guardian @ { .id == id };
+        guardians_dto.add(
+            guardian_dto(
+                id = guardian.id,
+                pgp_public_key = guardian.pgp_public_key,
+                telegram_username = guardian.telegram_username
+            )
+        );
+    }
+    return guardians_dto;
 }

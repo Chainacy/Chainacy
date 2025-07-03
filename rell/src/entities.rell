@@ -2,6 +2,7 @@ module;
 
 entity message {
     author: pubkey;
+    created_at: timestamp;
     encrypted_message: text;
     scheduled_publish_at: timestamp;
     mutable published_at: timestamp;

@@ -3,6 +3,7 @@ module;
 struct guardian_dto {
     id: byte_array;
     pgp_public_key: text;
+    telegram_username: text;
 }
 
 struct share_dto {
