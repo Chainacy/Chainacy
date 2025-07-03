@@ -6,7 +6,7 @@ blockchains:
         evm_signatures_authorized_operations:
           - register_user
       lib.ft4.core.admin:
-        admin_pubkey: "021407423146539E8BAA16FB3327A30AFD914ABE84ECA79CC839DC5686BFD1BB1C"
+        admin_pubkey: "029DAF4A3DA9BA54A5A018B200508C1CEFE7AEEE909BD0D2451AFC6F981EBEC2E7"
       lib.ft4.core.accounts.strategies.transfer.fee:
         asset:
           - name: "Chromia"
