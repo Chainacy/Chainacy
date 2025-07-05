@@ -167,6 +167,16 @@ query get_balance_by_telegram_username(telegram_username: text) {
     );
 }
 
+query get_fee_treasury_balance() {
+    val asset = get_platform_asset();
+    return assets.get_asset_balance(dapp_meta.fee_treasury, asset);
+}
+
+query get_reward_treasury_balance() {
+    val asset = get_platform_asset();
+    return assets.get_asset_balance(dapp_meta.reward_treasury, asset);
+}
+
 query get_number_of_active_guardians() {
     val thirty_days_in_ms = 30 * 24 * 60 * 60 * 1000;
     val active_guardians: list<guardian> = guardian @* {
@@ -177,7 +187,7 @@ query get_number_of_active_guardians() {
 
 query get_guardians_with_new_tasks_since(timestamp: timestamp) {
     val guardian_ids = set<byte_array>();
-    
+
     val messages: list<message> = message @* {
         .created_at > timestamp
     };

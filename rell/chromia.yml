@@ -6,24 +6,28 @@ blockchains:
         evm_signatures_authorized_operations:
           - register_user
       lib.ft4.core.admin:
-        admin_pubkey: "029DAF4A3DA9BA54A5A018B200508C1CEFE7AEEE909BD0D2451AFC6F981EBEC2E7"
+        admin_pubkey: x"029DAF4A3DA9BA54A5A018B200508C1CEFE7AEEE909BD0D2451AFC6F981EBEC2E7"
+      lib.ft4.core.accounts:
+        auth_descriptor:
+          max_number_per_account: 100
+          max_rules: 4
       lib.ft4.core.accounts.strategies.transfer.fee:
         asset:
           - name: "Chromia"
-            issuing_blockchain_rid": "15C0CA99BEE60A3B23829968771C50E491BD00D2E3AE448580CD48A8D71E7BBA"
-            amount: 10000000
+            issuing_blockchain_rid: x"15C0CA99BEE60A3B23829968771C50E491BD00D2E3AE448580CD48A8D71E7BBA"
+            amount: "10000000"
         fee_account: x"F15DEF01C0620FCA6DA00016DB3F310E2BBE11FA30E12ED3D3637F09A1EE48A4"
       lib.ft4.core.accounts.strategies.transfer:
         rules:
-          - sender_blockchain: "15C0CA99BEE60A3B23829968771C50E491BD00D2E3AE448580CD48A8D71E7BBA"
+          - sender_blockchain: "*"
             sender: "*"
             recipient: "*"
             asset:
               - name: "Chromia"
-                min_amount: 10000000
+                issuing_blockchain_rid: x"15C0CA99BEE60A3B23829968771C50E491BD00D2E3AE448580CD48A8D71E7BBA"
+                min_amount: "10000000"
             timeout_days: 30
-            strategy:
-              - "fee"
+            strategy: "fee"
 compile:
   rellVersion: 0.14.7
 database:
@@ -37,9 +41,9 @@ libs:
     insecure: false
   iccf:
     registry: https://gitlab.com/chromaway/core/directory-chain
-    path: src/lib/iccf
-    tagOrBranch: 1.87.0
-    rid: x"9C359787B75927733034EA1CEE74EEC8829D2907E4FC94790B5E9ABE4396575D"
+    path: src/iccf
+    tagOrBranch: 1.32.2
+    rid: x"1D567580C717B91D2F188A4D786DB1D41501086B155A68303661D25364314A4D"
     insecure: false
 deployments:
    mainnet:
