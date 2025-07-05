@@ -16,7 +16,7 @@ blockchains:
           - name: "Chromia"
             issuing_blockchain_rid: x"15C0CA99BEE60A3B23829968771C50E491BD00D2E3AE448580CD48A8D71E7BBA"
             amount: "10000000"
-        fee_account: x"F15DEF01C0620FCA6DA00016DB3F310E2BBE11FA30E12ED3D3637F09A1EE48A4"
+        fee_account: x"04F756AE325C2C5655E7FD998CF58F13742B0B489F96D8D0A7FE816F342F3297"
       lib.ft4.core.accounts.strategies.transfer:
         rules:
           - sender_blockchain: "*"
@@ -41,9 +41,9 @@ libs:
     insecure: false
   iccf:
     registry: https://gitlab.com/chromaway/core/directory-chain
-    path: src/iccf
-    tagOrBranch: 1.32.2
-    rid: x"1D567580C717B91D2F188A4D786DB1D41501086B155A68303661D25364314A4D"
+    path: src/lib/iccf
+    tagOrBranch: 1.87.0
+    rid: x"9C359787B75927733034EA1CEE74EEC8829D2907E4FC94790B5E9ABE4396575D"
     insecure: false
 deployments:
    mainnet:
