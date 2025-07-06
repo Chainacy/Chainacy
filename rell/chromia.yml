@@ -1,6 +1,10 @@
 blockchains:
   chainacy:
     module: main
+    config:
+      gtx:
+        modules:
+          - "net.postchain.d1.iccf.IccfGTXModule"
     moduleArgs:
       lib.ft4.core.auth:
         evm_signatures_authorized_operations:

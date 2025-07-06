@@ -229,7 +229,7 @@ export const EncryptTab = ({
           disabled={encryptState.isEncrypting || encryptState.isEncrypted || isPayingSaving}
           className={
             encryptState.isEncrypted 
-              ? 'font-mono text-[10px] sm:text-xs bg-gray-50 border-dashed cursor-not-allowed'
+              ? 'font-mono text-[9px] sm:text-xs bg-gray-50 border-dashed cursor-not-allowed'
               : encryptState.isEncrypting 
                 ? 'bg-gray-50 border-dashed cursor-not-allowed'
                 : ''

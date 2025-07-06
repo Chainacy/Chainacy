@@ -49,6 +49,17 @@ export const DecryptTab = ({
   const [localFilter, setLocalFilter] = useState<'all' | 'mine'>('all');
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [myTasks, setMyTasks] = useState<Task[]>([]);
+  const [copiedTaskId, setCopiedTaskId] = useState<string | null>(null);
+
+  const copyToClipboard = async (text: string, taskId: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedTaskId(taskId);
+      setTimeout(() => setCopiedTaskId(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
 
   const mapShareDataToTasks = (shareData: ShareData[]): Task[] => {
     return shareData.map((share, index) => {
@@ -246,7 +257,7 @@ export const DecryptTab = ({
         </div>
       </div>
 
-      <div className="space-y-5">
+      <div className="space-y-5 pb-4 sm:pb-0">
         {isLoadingTasks ? (
           <div className="text-center py-8">
             <p className="text-gray-700 font-orbitron">{MESSAGES.ui.loadingTasks}</p>
@@ -266,11 +277,22 @@ export const DecryptTab = ({
               key={task.id}
               className="bg-blue-50 rounded-md pt-3.5 px-3.5 pb-2 shadow-sm border-b border-gray-200"
             >
-              <div className="text-sm font-bold mb-2 font-orbitron" style={{color: COLORS.primary}}>
-                <span>{MESSAGES.decrypt.scheduledFor}: {task.scheduledFor}</span>
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-sm font-bold font-orbitron" style={{color: COLORS.primary}}>
+                  <span>{MESSAGES.decrypt.scheduledFor} {task.scheduledFor}</span>
+                </div>
+                <button
+                  onClick={() => copyToClipboard(task.pgpMessage, task.id)}
+                  className="px-2 py-0.5 flex items-center justify-center 
+                    bg-white/80 hover:bg-white border border-gray-300 rounded text-gray-600 
+                    hover:text-gray-800 transition-all duration-200 text-[10px] font-medium"
+                  title="Copy encrypted share"
+                >
+                  {copiedTaskId === task.id ? '✓ Copied' : 'Copy'}
+                </button>
               </div>
               <textarea
-                className="w-full h-20 p-2 text-xs font-mono bg-gray-50 border border-gray-300 
+                className="w-full h-20 p-2 text-[8px] sm:text-xs font-mono bg-gray-50 border border-gray-300 
                   rounded resize-none text-gray-700 leading-tight"
                 value={task.pgpMessage}
                 readOnly
