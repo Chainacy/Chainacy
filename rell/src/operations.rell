@@ -86,7 +86,7 @@ operation redeem_share(decrypted_content: text) {
         update message (
             published_at = last_known_time()
         );
-        delete share @* { .linked_message == message and .decrypted_content == "" };
+        delete_unredeemed_shares(message);
     }
 }
 
@@ -128,6 +128,24 @@ operation refund_all_messages() {
     admin.require_admin();
     val messages: list<message> = message @* { .published_at == 0 };
     refund_and_delete_messages(messages);
+}
+
+operation withdraw_from_fee_treasury(
+    receiver: pubkey,
+    amount: integer,
+) {
+    admin.require_admin();
+
+    val asset = get_platform_asset();
+    val treasury_balance = assets.get_asset_balance(dapp_meta.fee_treasury, asset);
+    require(treasury_balance >= amount, "Insufficient balance in treasury");
+
+    assets.Unsafe.transfer(
+            dapp_meta.fee_treasury,
+            account @ { .id == receiver.hash() },
+            asset,
+            amount
+        );
 }
 
 operation register_crosschain_asset_by_operator(

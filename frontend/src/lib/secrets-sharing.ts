@@ -12,11 +12,19 @@ class GF256 {
   static init() {
     if (this.initialized) return;
     
+    // Initialize with proper GF(256) arithmetic using primitive polynomial x^8 + x^4 + x^3 + x + 1
+    const primitive = 0x11d; // 285 in decimal, represents x^8 + x^4 + x^3 + x + 1
+    
     let x = 1;
     for (let i = 0; i < 255; i++) {
       this.EXP_TABLE[i] = x;
       this.LOG_TABLE[x] = i;
-      x = this.multiply(x, 2);
+      
+      // Multiply by 2 in GF(256)
+      x <<= 1;
+      if (x & 0x100) {
+        x ^= primitive;
+      }
     }
     this.EXP_TABLE[255] = this.EXP_TABLE[0]; // For convenience
     this.initialized = true;
@@ -24,12 +32,14 @@ class GF256 {
 
   static multiply(a: number, b: number): number {
     if (a === 0 || b === 0) return 0;
+    if (!this.initialized) this.init();
     return this.EXP_TABLE[(this.LOG_TABLE[a] + this.LOG_TABLE[b]) % 255];
   }
 
   static divide(a: number, b: number): number {
     if (a === 0) return 0;
     if (b === 0) throw new Error('Division by zero');
+    if (!this.initialized) this.init();
     return this.EXP_TABLE[(this.LOG_TABLE[a] - this.LOG_TABLE[b] + 255) % 255];
   }
 
@@ -43,6 +53,7 @@ class GF256 {
 
   static power(base: number, exponent: number): number {
     if (base === 0) return 0;
+    if (!this.initialized) this.init();
     return this.EXP_TABLE[(this.LOG_TABLE[base] * exponent) % 255];
   }
 }

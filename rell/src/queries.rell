@@ -153,30 +153,6 @@ query get_all_published_messages() {
     return messages_dto;
 }
 
-query get_balance_by_telegram_username(telegram_username: text) {
-    val guardian = guardian @? { .telegram_username == telegram_username };
-    require(guardian != null, "Guardian not found");
-
-    val asset = get_platform_asset();
-    val account = account @ { .id == guardian.id };
-    val balance = assets.get_asset_balance(account, asset);
-
-    return (
-        telegram_username = guardian.telegram_username,
-        balance = balance
-    );
-}
-
-query get_fee_treasury_balance() {
-    val asset = get_platform_asset();
-    return assets.get_asset_balance(dapp_meta.fee_treasury, asset);
-}
-
-query get_reward_treasury_balance() {
-    val asset = get_platform_asset();
-    return assets.get_asset_balance(dapp_meta.reward_treasury, asset);
-}
-
 query get_number_of_active_guardians() {
     val thirty_days_in_ms = 30 * 24 * 60 * 60 * 1000;
     val active_guardians: list<guardian> = guardian @* {

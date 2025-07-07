@@ -89,17 +89,17 @@ function delete_redeemed_shares(message: message) {
 
 function process_refund_for_message(message: message) {
     val asset = get_platform_asset();
-    val refund_ammount = calculate_refund_amount(message);
+    val refund_amount = calculate_refund_amount(message);
     val treasury_balance = assets.get_asset_balance(dapp_meta.reward_treasury, asset);
 
-    require(treasury_balance >= refund_ammount, "Insufficient balance in treasury");
-    require(refund_ammount <= message.total_paid, "Refund amount must be less than total paid");
+    require(treasury_balance >= refund_amount, "Insufficient balance in treasury");
+    require(refund_amount <= message.total_paid, "Refund amount must be less than total paid");
 
     assets.Unsafe.transfer(
             dapp_meta.reward_treasury,
             account @ { .id == message.author },
             asset,
-            refund_ammount
+            refund_amount
         );
 }
 
@@ -158,7 +158,7 @@ function is_decryptable(message): boolean {
 function is_share_redeemable(share: share): boolean {
     val message = share.linked_message;
 
-    if (message.scheduled_publish_at >= last_known_time() and
+    if (message.scheduled_publish_at <= last_known_time() and
         is_decryptable(message) == false) {
         return true;
     } else return false;
