@@ -75,7 +75,7 @@ namespace functions {
     function create_or_update_dapp_media(dapp_name: text, name, url: text, type: dapp_content_type) {
         val dapp = dapp @? {dapp_name == .name};
         require(not empty(dapp), "Dapp not found");
-        val media = dapp_media @? {dapp!!, name};
+        val media = dapp_media @? {dapp, name};
         if (empty(media)) {
             create dapp_media (dapp, name, url, type);
         } else {

@@ -19,7 +19,7 @@ blockchains:
         asset:
           - name: "Chromia"
             issuing_blockchain_rid: x"15C0CA99BEE60A3B23829968771C50E491BD00D2E3AE448580CD48A8D71E7BBA"
-            amount: "10000000"
+            amount: 10000000
         fee_account: x"04F756AE325C2C5655E7FD998CF58F13742B0B489F96D8D0A7FE816F342F3297"
       lib.ft4.core.accounts.strategies.transfer:
         rules:
@@ -29,7 +29,7 @@ blockchains:
             asset:
               - name: "Chromia"
                 issuing_blockchain_rid: x"15C0CA99BEE60A3B23829968771C50E491BD00D2E3AE448580CD48A8D71E7BBA"
-                min_amount: "10000000"
+                min_amount: 10000000
             timeout_days: 30
             strategy: "fee"
 compile:
