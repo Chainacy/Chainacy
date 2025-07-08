@@ -11,6 +11,7 @@ import lib.ft4.accounts;
 import lib.ft4.external.admin;
 
 import functions.*;
+import listing.*;
 import operations.*;
 import queries.*;
 
@@ -20,6 +21,7 @@ function () = auth.add_auth_handler(
 );
 
 object dapp_meta {
+    mutable dapp_name: text = "Chainacy";
     mutable reward_currency: text = "CHR";
     mutable min_reward: integer = 10;
     mutable fee_treasury: account = accounts.create_account_without_auth(
@@ -34,63 +36,4 @@ object dapp_meta {
 
 operation __begin_block(height: integer) {
     clean_up();
-}
-
-enum dapp_content_type {
-    landscape,
-    portrait,
-    promotional,
-    video,
-    icon
-}
-
-struct dapp_media {
-    name: text;
-    url: text;
-    type: dapp_content_type;
-}
-
-query find_dapp_details(dapp_rowid: rowid, requested_content_types: list<dapp_content_type>? = null) {
-    return (
-        rowid = 2025,
-        name = "Chainacy",
-        description = "A decentralized platform for releasing encrypted messages at a scheduled time",
-        launch_url = "https://chainacy.com/",
-        genre = "Cryptography",
-        chain_list = [
-            (
-            name = "Chainacy",
-            brid = byte_array("221ADB43FAEC71289054A968DF1F7FEE8064F4852EFFB1063A7E848028ECFDD0"),
-            role = "Chainacy"
-            )
-        ],
-        content = get_dapp_media(requested_content_types)
-    ).to_gtv_pretty();
-}
-
-function get_dapp_media(requested_content_types: list<dapp_content_type>? = null): list<dapp_media>? {
-
-    val ec_media: map<dapp_content_type, dapp_media> = [
-        dapp_content_type
-        .portrait: dapp_media(
-            name = "portrait1",
-            url = "https://filehub-gw.chromia.com/mainnet/3c805d064b41f502da945f144384de0d7f263c19c3b6b1b564cc33dae516f04f",
-            dapp_content_type.portrait
-        ),
-    ];
-
-    if (not empty(requested_content_types)) {
-
-        val media = list<dapp_media>();
-
-        for (type_requested in requested_content_types) {
-            if (ec_media.contains(type_requested)) {
-                media.add(ec_media[type_requested]);
-            }
-        }
-
-        return if (media.size() > 0) media else null;
-    }
-
-    return null;
 }

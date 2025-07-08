@@ -3,6 +3,7 @@ module;
 import functions.*;
 import lib.ft4.core.admin;
 import lib.ft4.core.crosschain;
+import main.{dapp_meta};
 import structs.{share_dto};
 import validation.*;
 

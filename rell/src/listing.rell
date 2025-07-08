@@ -1,0 +1,127 @@
+module;
+
+import main.{dapp_meta};
+import lib.ft4.core.admin;
+
+enum dapp_content_type {
+    landscape,
+    portrait,
+    promotional,
+    video,
+    icon
+}
+
+entity dapp {
+    key name;
+    mutable description: text = "";
+    mutable launch_url: text = "";
+    mutable genre: text = "";
+}
+
+entity dapp_media {
+    key dapp, name;
+    mutable url: text = "";
+    type: dapp_content_type;
+}
+
+entity blockchain {
+    key dapp, brid: byte_array;
+    index brid;
+    index mutable name: text;
+    mutable role: text;
+}
+
+function require_admin_signer() {
+    admin.require_admin();
+}
+
+function get_dapp_by_name(name) {
+    return dapp @ { name };
+}
+
+operation create_or_update_dapp(description: text, launch_url: text, genre: text) {
+    require_admin_signer();
+    functions.create_or_update_dapp(dapp_meta.dapp_name, description, launch_url, genre);
+}
+
+operation create_or_update_blockchain(brid: byte_array, chain_name: text, role: text) {
+    require_admin_signer();
+    val dapp = get_dapp_by_name(dapp_meta.dapp_name);
+    functions.create_or_update_blockchain(dapp, brid, chain_name, role);
+}
+
+operation create_or_update_dapp_media(name, url: text, type: dapp_content_type) {
+    require_admin_signer();
+    functions.create_or_update_dapp_media(dapp_meta.dapp_name, name, url, type);
+}
+
+namespace functions {
+    function create_or_update_blockchain(dapp, brid: byte_array, name: text, role: text) {
+        val blockchain = blockchain @? { brid };
+        if (empty(blockchain)) {
+            create blockchain ( dapp, brid, name, role );
+        } else update blockchain ( name, role );
+    }
+
+    function create_or_update_dapp(name, description: text, launch_url: text, genre: text) {
+        val dapp = dapp @? { name };
+        if (empty(dapp)) {
+            create dapp ( name, description, launch_url, genre );
+        } else {
+            update dapp ( description, launch_url, genre );
+        }
+    }
+
+    function create_or_update_dapp_media(dapp_name: text, name, url: text, type: dapp_content_type) {
+        val dapp = dapp @? {dapp_name == .name};
+        require(not empty(dapp), "Dapp not found");
+        val media = dapp_media @? {dapp!!, name};
+        if (empty(media)) {
+            create dapp_media (dapp, name, url, type);
+        } else {
+            update media(url);
+        }
+    }
+}
+
+query find_dapp_details(dapp_rowid: rowid, requested_content_types: list<dapp_content_type>? = null) {
+    val dapp = get_dapp_by_name("Chainacy");
+    return map_dapp_details(dapp, requested_content_types);
+}
+
+function map_dapp_details(dapp, requested_content_types: list<dapp_content_type>? = null) {
+    val blockchains = find_and_map_dapp_blockchains(dapp);
+    val dapp_media = if (not empty(requested_content_types)) find_and_map_dapp_media(
+        dapp,
+        requested_content_types
+    ) else null;
+
+    return (
+        rowid = dapp.rowid,
+        name = dapp.name,
+        description = dapp.description,
+        launch_url = dapp.launch_url,
+        genre = dapp.genre,
+        chain_list = blockchains,
+        content = dapp_media
+    ).to_gtv_pretty();
+}
+
+function find_and_map_dapp_blockchains(dapp) =
+    blockchain @* { dapp } (
+    @omit @sort .rowid,
+    name = .name,
+    brid = .brid,
+    role = .role
+);
+
+function find_and_map_dapp_media(dapp, requested_content_types: list<dapp_content_type>) =
+    dapp_media @* {
+    dapp,
+    .type in requested_content_types
+} (
+    @omit @sort .rowid,
+    name = .name,
+    url = .url,
+    type = .type
+);
