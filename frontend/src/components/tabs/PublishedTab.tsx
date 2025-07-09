@@ -145,7 +145,7 @@ export const PublishedTab = ({
         </span>
       </div>
 
-      <div className="space-y-5 pb-6">
+      <div className="space-y-5 pb-4 sm:pb-0">
         {isLoadingMessages ? (
           <div className="text-center py-8">
             <p className="text-gray-700 font-orbitron">{MESSAGES.published.loadingMessages}</p>
