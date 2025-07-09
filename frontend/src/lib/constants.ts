@@ -90,7 +90,9 @@ export const MESSAGES = {
     decryptingMessage: 'Decrypting message...',
     failedToDecrypt: 'Failed to decrypt:',
     scheduledFor: 'Scheduled for:',
+    scheduledForShort: 'Planned:',
     authorPaid: 'Author paid:',
+    authorPaidShort: 'Paid:',
     notEnoughShares: 'Not enough shares available for decryption'
   },
   encrypt: {

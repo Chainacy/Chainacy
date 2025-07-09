@@ -145,7 +145,7 @@ export const PublishedTab = ({
         </span>
       </div>
 
-      <div className="space-y-5">
+      <div className="space-y-5 pb-6">
         {isLoadingMessages ? (
           <div className="text-center py-8">
             <p className="text-gray-700 font-orbitron">{MESSAGES.published.loadingMessages}</p>
@@ -175,12 +175,20 @@ export const PublishedTab = ({
                 </div>
               ) : message.decryptedContent ? (
                 <div>
-                  <div className="text-base text-gray-800 leading-snug font-orbitron bg-white p-3 rounded border break-words overflow-wrap-anywhere max-h-20 overflow-y-auto whitespace-pre-wrap">
+                  <div className="text-xs sm:text-sm text-gray-800 leading-snug font-orbitron bg-white p-3 rounded border break-words overflow-wrap-anywhere max-h-20 overflow-y-auto whitespace-pre-wrap">
                     {message.decryptedContent}
                   </div>
                   <div className="text-xs text-gray-500 mt-2 font-orbitron flex justify-between">
-                    <span>{MESSAGES.published.scheduledFor} {message.scheduledFor}</span>
-                    <span>{MESSAGES.published.authorPaid} {(message.totalPaid / 1_000_000).toFixed(2)} CHR</span>
+                    <span>
+                      <span className="sm:hidden">{MESSAGES.published.scheduledForShort}</span>
+                      <span className="hidden sm:inline">{MESSAGES.published.scheduledFor}</span>
+                      {' '}{message.scheduledFor}
+                    </span>
+                    <span>
+                      <span className="sm:hidden">{MESSAGES.published.authorPaidShort}</span>
+                      <span className="hidden sm:inline">{MESSAGES.published.authorPaid}</span>
+                      {' '}{(message.totalPaid / 1_000_000).toFixed(2)} CHR
+                    </span>
                   </div>
                 </div>
               ) : (
